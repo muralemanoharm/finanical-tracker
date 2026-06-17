@@ -8,6 +8,7 @@ import Insurance from './pages/Insurance';
 import Recommendations from './pages/Recommendations';
 import Goals from './pages/Goals';
 import Settings from './pages/Settings';
+import CashFlow from './pages/CashFlow';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/instruments" element={<Instruments />} />
+            <Route path="/cash-flow" element={<CashFlow />} />
             <Route path="/projections" element={<Projections />} />
             <Route path="/insurance" element={<Insurance />} />
             <Route path="/recommendations" element={<Recommendations />} />
