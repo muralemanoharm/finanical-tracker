@@ -25,6 +25,12 @@ import { todayISO } from '../utils/calculations';
 
 const STORAGE_KEY = 'finplan_data';
 
+// Standalone feature hooks (useRiskProfile, useFundFees, useNominees, useTaxHarvest) persist
+// under their own localStorage keys rather than the main `data` blob, so they need to be folded
+// into export/import explicitly. `nw_drift` is omitted since it holds no persisted user input —
+// it's fully derived from risk profile + existing instrument data on every render.
+const STANDALONE_STORAGE_KEYS = ['nw_risk', 'nw_fees', 'nw_nominees', 'nw_harvest'] as const;
+
 const DEFAULT_PROFILE: Profile = {
   name: '',
   monthlyIncome: 0,
@@ -204,7 +210,17 @@ export function useFinancialData() {
   }, []);
 
   const exportData = useCallback(() => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const exportPayload: Record<string, unknown> = { ...data };
+    STANDALONE_STORAGE_KEYS.forEach((key) => {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      try {
+        exportPayload[key] = JSON.parse(raw);
+      } catch {
+        // skip malformed entries rather than failing the whole export
+      }
+    });
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -218,6 +234,16 @@ export function useFinancialData() {
       const parsed = JSON.parse(json);
       if (typeof parsed !== 'object' || parsed === null) throw new Error('Invalid file');
       setData({ ...DEFAULT_DATA, ...parsed, profile: { ...DEFAULT_PROFILE, ...parsed.profile } });
+      let hasStandaloneData = false;
+      STANDALONE_STORAGE_KEYS.forEach((key) => {
+        if (parsed[key] !== undefined) {
+          localStorage.setItem(key, JSON.stringify(parsed[key]));
+          hasStandaloneData = true;
+        }
+      });
+      // Standalone hooks only read localStorage on mount, so a reload is needed for the imported
+      // risk profile / fees / nominees / harvest data to actually take effect in the running app.
+      if (hasStandaloneData) window.location.reload();
       return { success: true };
     } catch (e) {
       return { success: false, error: e instanceof Error ? e.message : 'Failed to import file' };

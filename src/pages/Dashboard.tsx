@@ -7,10 +7,13 @@ import { AssetLiabilityBar } from '../components/charts/AssetLiabilityBar';
 import { useFinancialDataContext } from '../context/FinancialDataContext';
 import { useCareerDataContext } from '../context/CareerDataContext';
 import { useNetWorth } from '../hooks/useNetWorth';
+import { useRiskProfile } from '../hooks/useRiskProfile';
 import { projectNetWorth } from '../hooks/useProjections';
 import { humanCapitalValue } from '../utils/careerCalculations';
 import { addMonthsISO, todayISO } from '../utils/calculations';
 import { formatINR, formatINRCompact, formatPercent, formatDate } from '../utils/formatters';
+import { DriftAlertCard } from '../components/dashboard/DriftAlertCard';
+import { TaxHarvestAlert } from '../components/dashboard/TaxHarvestAlert';
 import { Camera, Trash2 } from 'lucide-react';
 
 const PROJECTION_MONTHS_AHEAD = 12;
@@ -19,6 +22,7 @@ export default function Dashboard() {
   const { data, recordSnapshotNow, deleteSnapshot } = useFinancialDataContext();
   const { data: careerData } = useCareerDataContext();
   const netWorth = useNetWorth(data);
+  const riskProfile = useRiskProfile();
   const humanCapital = humanCapitalValue(careerData.humanCapital);
   const totalWealth = netWorth.netWorth + humanCapital;
   const today = todayISO();
@@ -41,6 +45,11 @@ export default function Dashboard() {
     <div>
       <Header title="Net Worth Overview" subtitle="Your complete financial picture at a glance" />
       <div className="px-8 py-6 space-y-6">
+        {riskProfile.isComplete && riskProfile.level && (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-cyan-accent/10 text-cyan-accent border-cyan-accent/30">
+            Risk Profile: {riskProfile.level}
+          </span>
+        )}
         <Card className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <p className="text-sm text-slate-400 mb-1">Total Net Worth</p>
@@ -83,6 +92,10 @@ export default function Dashboard() {
             <AllocationDonut allocation={netWorth.allocation} />
           </Card>
         </div>
+
+        <DriftAlertCard />
+
+        <TaxHarvestAlert />
 
         <Card>
           <h3 className="text-white font-medium mb-3">Net Worth Trend</h3>

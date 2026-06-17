@@ -4,6 +4,7 @@ import { Card, KpiCard } from '../components/ui/Card';
 import { Field, Input } from '../components/ui/FormField';
 import { useFinancialDataContext } from '../context/FinancialDataContext';
 import { useTaxPlanning } from '../hooks/useTaxPlanning';
+import { TaxHarvestAlert } from '../components/dashboard/TaxHarvestAlert';
 import { formatINR, formatINRCompact } from '../utils/formatters';
 import type { TaxInputs } from '../types/financial';
 
@@ -97,6 +98,8 @@ export default function TaxPlanning() {
           <RegimeCard title="Old Regime" regime={tax.oldRegime} recommended={tax.recommendedRegime === 'Old'} />
           <RegimeCard title="New Regime" regime={tax.newRegime} recommended={tax.recommendedRegime === 'New'} />
         </div>
+
+        <TaxHarvestAlert />
 
         <form onSubmit={handleSave}>
           <Card className="max-w-xl">

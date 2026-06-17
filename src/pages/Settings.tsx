@@ -3,6 +3,7 @@ import { Header } from '../components/layout/Header';
 import { Card } from '../components/ui/Card';
 import { Field, Input } from '../components/ui/FormField';
 import { useFinancialDataContext } from '../context/FinancialDataContext';
+import { RiskProfileQuestionnaire } from '../components/settings/RiskProfileQuestionnaire';
 import { Download, Upload, RotateCcw } from 'lucide-react';
 
 export default function Settings() {
@@ -74,6 +75,14 @@ export default function Settings() {
               Save Profile
             </button>
           </form>
+        </Card>
+
+        <Card>
+          <h2 className="text-white font-medium mb-1">Risk Profile</h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Answer these 5 questions to get a recommended target asset allocation. This powers the Drift Alert on your Dashboard.
+          </p>
+          <RiskProfileQuestionnaire />
         </Card>
 
         <Card>

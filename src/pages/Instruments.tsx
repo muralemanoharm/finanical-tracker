@@ -9,6 +9,7 @@ import { EPFPPFSection } from '../components/instruments/EPFPPFSection';
 import { StockSection } from '../components/instruments/StockSection';
 import { GoldSection } from '../components/instruments/GoldSection';
 import { LiabilitySection } from '../components/instruments/LiabilitySection';
+import { FeeImpactSection } from '../components/instruments/FeeImpactSection';
 
 const TABS = [
   { key: 'mf', label: 'MF/SIP', Component: MFSection },
@@ -20,6 +21,7 @@ const TABS = [
   { key: 'stocks', label: 'Stocks', Component: StockSection },
   { key: 'gold', label: 'Gold', Component: GoldSection },
   { key: 'liabilities', label: 'Liabilities', Component: LiabilitySection },
+  { key: 'fees', label: 'Fee Impact', Component: FeeImpactSection },
 ] as const;
 
 export default function Instruments() {
