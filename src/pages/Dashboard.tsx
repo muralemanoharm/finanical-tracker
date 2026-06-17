@@ -5,8 +5,10 @@ import { AllocationDonut } from '../components/charts/AllocationDonut';
 import { NetWorthChart } from '../components/charts/NetWorthChart';
 import { AssetLiabilityBar } from '../components/charts/AssetLiabilityBar';
 import { useFinancialDataContext } from '../context/FinancialDataContext';
+import { useCareerDataContext } from '../context/CareerDataContext';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { projectNetWorth } from '../hooks/useProjections';
+import { humanCapitalValue } from '../utils/careerCalculations';
 import { addMonthsISO, todayISO } from '../utils/calculations';
 import { formatINR, formatINRCompact, formatPercent, formatDate } from '../utils/formatters';
 import { Camera, Trash2 } from 'lucide-react';
@@ -15,7 +17,10 @@ const PROJECTION_MONTHS_AHEAD = 12;
 
 export default function Dashboard() {
   const { data, recordSnapshotNow, deleteSnapshot } = useFinancialDataContext();
+  const { data: careerData } = useCareerDataContext();
   const netWorth = useNetWorth(data);
+  const humanCapital = humanCapitalValue(careerData.humanCapital);
+  const totalWealth = netWorth.netWorth + humanCapital;
   const today = todayISO();
 
   const projection = useMemo(
@@ -48,6 +53,11 @@ export default function Dashboard() {
                 {formatPercent(momDeltaPercent)}) since last snapshot ({formatDate(previous.date, 'MMM yy')})
               </p>
             )}
+            <p className="text-sm text-slate-400 mt-3">
+              Net Worth: <span className="text-slate-200 font-medium">{formatINRCompact(netWorth.netWorth)}</span> | Human Capital:{' '}
+              <span className="text-slate-200 font-medium">{formatINRCompact(humanCapital)}</span> | Total Wealth:{' '}
+              <span className="text-cyan-accent font-medium">{formatINRCompact(totalWealth)}</span>
+            </p>
           </div>
           <button
             onClick={() => recordSnapshotNow(netWorth.netWorth, netWorth.totalAssets, netWorth.totalLiabilities)}

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { FinancialDataProvider } from './context/FinancialDataContext';
+import { CareerDataProvider } from './context/CareerDataContext';
 import { Shell } from './components/layout/Shell';
 import Dashboard from './pages/Dashboard';
 import Instruments from './pages/Instruments';
@@ -12,27 +13,31 @@ import CashFlow from './pages/CashFlow';
 import FI from './pages/FI';
 import TaxPlanning from './pages/TaxPlanning';
 import Returns from './pages/Returns';
+import Career from './pages/Career';
 
 function App() {
   return (
     <FinancialDataProvider>
-      <BrowserRouter>
-        <Shell>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/instruments" element={<Instruments />} />
-            <Route path="/cash-flow" element={<CashFlow />} />
-            <Route path="/projections" element={<Projections />} />
-            <Route path="/insurance" element={<Insurance />} />
-            <Route path="/fi" element={<FI />} />
-            <Route path="/tax-planning" element={<TaxPlanning />} />
-            <Route path="/returns" element={<Returns />} />
-            <Route path="/recommendations" element={<Recommendations />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </Shell>
-      </BrowserRouter>
+      <CareerDataProvider>
+        <BrowserRouter>
+          <Shell>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/instruments" element={<Instruments />} />
+              <Route path="/cash-flow" element={<CashFlow />} />
+              <Route path="/projections" element={<Projections />} />
+              <Route path="/insurance" element={<Insurance />} />
+              <Route path="/fi" element={<FI />} />
+              <Route path="/tax-planning" element={<TaxPlanning />} />
+              <Route path="/returns" element={<Returns />} />
+              <Route path="/recommendations" element={<Recommendations />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/career" element={<Career />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </Shell>
+        </BrowserRouter>
+      </CareerDataProvider>
     </FinancialDataProvider>
   );
 }
