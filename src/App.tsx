@@ -9,6 +9,7 @@ import Recommendations from './pages/Recommendations';
 import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import CashFlow from './pages/CashFlow';
+import FI from './pages/FI';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/cash-flow" element={<CashFlow />} />
             <Route path="/projections" element={<Projections />} />
             <Route path="/insurance" element={<Insurance />} />
+            <Route path="/fi" element={<FI />} />
             <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/settings" element={<Settings />} />
