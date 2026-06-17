@@ -2,13 +2,96 @@ import { useState } from 'react';
 import { Plus, Pencil, Trash2, CreditCard } from 'lucide-react';
 import { useFinancialDataContext } from '../../context/FinancialDataContext';
 import { summarizeLiability } from '../../hooks/useNetWorth';
+import { useDebtPayoff } from '../../hooks/useDebtPayoff';
 import { DataTable, type Column } from '../ui/DataTable';
 import { Drawer } from '../ui/Drawer';
 import { EmptyState } from '../ui/EmptyState';
+import { Card } from '../ui/Card';
+import { Field, Input } from '../ui/FormField';
 import { HealthBadge } from '../ui/Badge';
 import { AddLiabilityForm } from '../forms/AddLiabilityForm';
 import { formatINR, formatPercent, formatDate } from '../../utils/formatters';
-import type { Liability } from '../../types/financial';
+import type { Liability, DebtPayoffMethod } from '../../types/financial';
+
+function DebtPayoffPlanner() {
+  const { data, updateDebtPlanner } = useFinancialDataContext();
+  const { avalanche, snowball, selected, timeline } = useDebtPayoff(data);
+  const otherMethodInterest = data.debtPlanner.method === 'Avalanche' ? snowball.totalInterestPaid : avalanche.totalInterestPaid;
+  const interestSavedBySelected = otherMethodInterest - selected.totalInterestPaid;
+
+  const setMethod = (method: DebtPayoffMethod) => updateDebtPlanner({ method });
+
+  return (
+    <Card className="mb-6">
+      <h3 className="text-white font-medium mb-4">Debt Payoff Planner</h3>
+      <div className="flex flex-wrap items-end gap-4 mb-5">
+        <div className="flex rounded-lg border border-navy-600 overflow-hidden">
+          {(['Avalanche', 'Snowball'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMethod(m)}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                data.debtPlanner.method === m ? 'bg-cyan-accent text-navy-950' : 'bg-navy-800 text-slate-300 hover:bg-navy-700'
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+        <div className="w-48">
+          <Field label="Extra Monthly Payment (₹)">
+            <Input
+              type="number"
+              value={data.debtPlanner.extraMonthlyPayment || ''}
+              onChange={(e) => updateDebtPlanner({ extraMonthlyPayment: parseFloat(e.target.value) || 0 })}
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+        <div className="bg-navy-900/50 rounded-lg p-4">
+          <p className="text-xs text-slate-400 mb-1">Debt-free in</p>
+          <p className="text-xl font-semibold text-white">{selected.months !== null ? `${selected.months} months` : 'Not within 50 years'}</p>
+        </div>
+        <div className="bg-navy-900/50 rounded-lg p-4">
+          <p className="text-xs text-slate-400 mb-1">Debt-free by</p>
+          <p className="text-xl font-semibold text-white">{selected.debtFreeDate ? formatDate(selected.debtFreeDate, 'MMM yyyy') : '—'}</p>
+        </div>
+        <div className="bg-navy-900/50 rounded-lg p-4">
+          <p className="text-xs text-slate-400 mb-1">Total interest paid</p>
+          <p className="text-xl font-semibold text-white">{formatINR(selected.totalInterestPaid)}</p>
+          {interestSavedBySelected > 0.5 && (
+            <p className="text-xs text-emerald-400 mt-1">{formatINR(interestSavedBySelected)} less than {data.debtPlanner.method === 'Avalanche' ? 'Snowball' : 'Avalanche'}</p>
+          )}
+        </div>
+      </div>
+
+      {timeline.length > 0 && (
+        <div className="space-y-3">
+          {timeline
+            .slice()
+            .sort((a, b) => (a.payoffMonth ?? Infinity) - (b.payoffMonth ?? Infinity))
+            .map((t) => {
+              const maxMonth = Math.max(...timeline.map((x) => x.payoffMonth ?? 0), 1);
+              const widthPercent = t.payoffMonth !== null ? Math.max(4, (t.payoffMonth / maxMonth) * 100) : 100;
+              return (
+                <div key={t.id}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-slate-300">{t.name}</span>
+                    <span className="text-slate-400">{t.payoffDate ? formatDate(t.payoffDate, 'MMM yyyy') : 'Beyond 50 years'}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-navy-700 overflow-hidden">
+                    <div className="h-full bg-cyan-accent rounded-full" style={{ width: `${widthPercent}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      )}
+    </Card>
+  );
+}
 
 export function LiabilitySection() {
   const { data, addEntity, updateEntity, deleteEntity } = useFinancialDataContext();
@@ -66,6 +149,7 @@ export function LiabilitySection() {
           <Plus size={16} /> Add Liability
         </button>
       </div>
+      <DebtPayoffPlanner />
       {data.liabilities.length === 0 ? (
         <EmptyState icon={CreditCard} title="No liabilities yet" description="Add loans to see them netted against your assets in your overall net worth." actionLabel="Add your first liability" onAction={openAdd} />
       ) : (
