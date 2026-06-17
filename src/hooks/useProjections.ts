@@ -69,7 +69,9 @@ function projectULIP(u: FinancialData['ulips'][number], years: number): number {
 }
 
 function projectEPFPPF(ep: FinancialData['epfPpf'][number], years: number): number {
-  return epfPpfProjectedValue(ep.currentBalance, ep.monthlyContribution, ep.expectedReturn, years);
+  // FIXED: accountType was not passed through, so PPF balances were compounded using the EPF
+  // (monthly SIP-style) convention instead of PPF's annual-crediting convention.
+  return epfPpfProjectedValue(ep.currentBalance, ep.monthlyContribution, ep.expectedReturn, years, ep.accountType);
 }
 
 function projectStock(stock: FinancialData['stocks'][number], years: number): number {

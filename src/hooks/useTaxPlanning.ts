@@ -12,7 +12,10 @@ import {
   CESS_RATE,
   OLD_REGIME_SLABS,
   NEW_REGIME_SLABS,
+  OLD_REGIME_SURCHARGE_SLABS,
+  NEW_REGIME_SURCHARGE_SLABS,
   slabTax,
+  computeSurcharge,
 } from '../utils/calculations';
 
 export interface Section80CBreakdown {
@@ -44,6 +47,7 @@ export interface NpsBreakdown {
 export interface RegimeResult {
   taxableIncome: number;
   taxBeforeCess: number;
+  surcharge: number;
   cess: number;
   totalTax: number;
   rebateApplied: boolean;
@@ -105,15 +109,35 @@ export function useTaxPlanning(data: FinancialData): TaxPlanningResult {
     const oldTaxableIncome = Math.max(0, grossSalary - OLD_REGIME_STANDARD_DEDUCTION - hra - section80C.eligible - section80D.eligible - nps.eligible);
     const oldRebateApplied = oldTaxableIncome <= OLD_REGIME_REBATE_THRESHOLD;
     const oldTaxBeforeCess = oldRebateApplied ? 0 : slabTax(oldTaxableIncome, OLD_REGIME_SLABS);
-    const oldCess = oldTaxBeforeCess * (CESS_RATE / 100);
-    const oldRegime: RegimeResult = { taxableIncome: oldTaxableIncome, taxBeforeCess: oldTaxBeforeCess, cess: oldCess, totalTax: oldTaxBeforeCess + oldCess, rebateApplied: oldRebateApplied };
+    // FIXED: surcharge on high taxable incomes (>₹50L) was never applied, so totalTax understated
+    // the actual liability for high earners. Cess (4%) is levied on tax + surcharge, not just tax.
+    const oldSurcharge = oldRebateApplied ? 0 : computeSurcharge(oldTaxableIncome, oldTaxBeforeCess, OLD_REGIME_SURCHARGE_SLABS, (income) => slabTax(income, OLD_REGIME_SLABS)).surcharge;
+    const oldCess = (oldTaxBeforeCess + oldSurcharge) * (CESS_RATE / 100);
+    const oldRegime: RegimeResult = {
+      taxableIncome: oldTaxableIncome,
+      taxBeforeCess: oldTaxBeforeCess,
+      surcharge: oldSurcharge,
+      cess: oldCess,
+      totalTax: oldTaxBeforeCess + oldSurcharge + oldCess,
+      rebateApplied: oldRebateApplied,
+    };
 
     // New regime allows no 80C/80D/HRA deductions, only the (higher) standard deduction.
     const newTaxableIncome = Math.max(0, grossSalary - NEW_REGIME_STANDARD_DEDUCTION);
     const newRebateApplied = newTaxableIncome <= NEW_REGIME_REBATE_THRESHOLD;
     const newTaxBeforeCess = newRebateApplied ? 0 : slabTax(newTaxableIncome, NEW_REGIME_SLABS);
-    const newCess = newTaxBeforeCess * (CESS_RATE / 100);
-    const newRegime: RegimeResult = { taxableIncome: newTaxableIncome, taxBeforeCess: newTaxBeforeCess, cess: newCess, totalTax: newTaxBeforeCess + newCess, rebateApplied: newRebateApplied };
+    // FIXED: same missing-surcharge bug as the old regime; new-regime surcharge is capped at 25%
+    // (no 37% slab) per Budget 2023, modeled via NEW_REGIME_SURCHARGE_SLABS.
+    const newSurcharge = newRebateApplied ? 0 : computeSurcharge(newTaxableIncome, newTaxBeforeCess, NEW_REGIME_SURCHARGE_SLABS, (income) => slabTax(income, NEW_REGIME_SLABS)).surcharge;
+    const newCess = (newTaxBeforeCess + newSurcharge) * (CESS_RATE / 100);
+    const newRegime: RegimeResult = {
+      taxableIncome: newTaxableIncome,
+      taxBeforeCess: newTaxBeforeCess,
+      surcharge: newSurcharge,
+      cess: newCess,
+      totalTax: newTaxBeforeCess + newSurcharge + newCess,
+      rebateApplied: newRebateApplied,
+    };
 
     const recommendedRegime: 'Old' | 'New' = oldRegime.totalTax <= newRegime.totalTax ? 'Old' : 'New';
     const taxSavingsWithRecommended = Math.abs(oldRegime.totalTax - newRegime.totalTax);

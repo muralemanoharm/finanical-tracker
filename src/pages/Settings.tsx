@@ -99,6 +99,11 @@ export default function Settings() {
           </div>
           {importMessage && <p className="text-sm text-slate-300 mt-3">{importMessage}</p>}
         </Card>
+
+        <Card>
+          <h2 className="text-white font-medium mb-2">Tax Calculation Notes</h2>
+          <p className="text-sm text-slate-400">Tax rules based on Finance Act 2024. Last verified: June 2026.</p>
+        </Card>
       </div>
     </div>
   );
