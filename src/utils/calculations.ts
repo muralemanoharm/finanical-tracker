@@ -5,7 +5,11 @@ export const RETURN_BENCHMARK = 7; // percent, baseline used in wealth score
 export const ULIP_CHARGE_ALERT_THRESHOLD = 2.5; // percent
 export const MEDICAL_INFLATION_RATE = 14; // percent
 export const MIN_HEALTH_COVER_INDIVIDUAL = 1_000_000; // ₹10L
+export const MIN_HEALTH_COVER_FAMILY = 1_500_000; // ₹15L
+export const ULIP_NET_RETURN_ALERT_THRESHOLD = 8; // percent; below this, term + direct MF is usually more efficient
+export const INSURANCE_PREMIUM_INCOME_ALERT_PERCENT = 10; // percent of annual income
 export const LIFE_COVER_INCOME_MULTIPLE = 10;
+export const LIFE_COVER_EXPENSE_MULTIPLE = 5;
 // No expected-return field is captured for Stocks/Gold, so projections fall back to these
 // long-term assumptions (broad equity market average, long-term gold appreciation).
 export const STOCK_EXPECTED_RETURN_DEFAULT = 12;
@@ -85,6 +89,25 @@ export function ulipProjectedValue(
 ): number {
   const effectiveRate = ulipEffectiveReturn(expectedReturnPercent, mortalityChargesPercent, fundManagementChargesPercent);
   return lumpsumFutureValue(currentFundValue, effectiveRate, years);
+}
+
+/** Years from now until a ULIP's projected fund value first exceeds total premiums paid (since
+ * inception through that point). Returns null if it doesn't happen within maxSearchYears. */
+export function ulipBreakEvenYear(
+  currentFundValue: number,
+  expectedReturnPercent: number,
+  mortalityChargesPercent: number,
+  fundManagementChargesPercent: number,
+  annualPremium: number,
+  yearsElapsedSoFar: number,
+  maxSearchYears = 30,
+): number | null {
+  for (let y = 0; y <= maxSearchYears; y++) {
+    const fundValue = ulipProjectedValue(currentFundValue, expectedReturnPercent, mortalityChargesPercent, fundManagementChargesPercent, y);
+    const premiumsPaid = annualPremium * (yearsElapsedSoFar + y);
+    if (fundValue >= premiumsPaid) return y;
+  }
+  return null;
 }
 
 /** EPF/PPF projected balance: current balance grows + monthly contributions grow as a SIP, both at expectedReturn, over `years`. */
