@@ -77,7 +77,7 @@ function projectGold(gold: FinancialData['gold'][number], years: number): number
 }
 
 /** Liabilities are assumed to amortize roughly linearly to zero over their remaining tenure. */
-function projectLiabilities(data: FinancialData, years: number): number {
+export function projectLiabilities(data: FinancialData, years: number): number {
   const months = years * 12;
   return data.liabilities.reduce((sum, l) => {
     if (l.remainingTenureMonths <= 0) return sum;
@@ -94,6 +94,10 @@ export function projectTotalAssets(data: FinancialData, years: number): number {
   const stocks = data.stocks.reduce((s, st) => s + projectStock(st, years), 0);
   const gold = data.gold.reduce((s, g) => s + projectGold(g, years), 0);
   return mf + fd + ulip + epf + stocks + gold;
+}
+
+export function projectNetWorth(data: FinancialData, years: number): number {
+  return projectTotalAssets(data, years) - projectLiabilities(data, years);
 }
 
 export function useProjections(data: FinancialData) {
