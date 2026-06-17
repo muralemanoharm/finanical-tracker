@@ -14,6 +14,7 @@ import FI from './pages/FI';
 import TaxPlanning from './pages/TaxPlanning';
 import Returns from './pages/Returns';
 import Career from './pages/Career';
+import LifeMap from './pages/LifeMap';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="/recommendations" element={<Recommendations />} />
               <Route path="/goals" element={<Goals />} />
               <Route path="/career" element={<Career />} />
+              <Route path="/life-map" element={<LifeMap />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </Shell>

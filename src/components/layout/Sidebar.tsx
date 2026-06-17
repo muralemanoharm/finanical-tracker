@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Wallet, TrendingUp, ShieldCheck, Lightbulb, Target, Settings as SettingsIcon, Banknote, ArrowLeftRight, Flame, Receipt, Percent, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Wallet, TrendingUp, ShieldCheck, Lightbulb, Target, Settings as SettingsIcon, Banknote, ArrowLeftRight, Flame, Receipt, Percent, Briefcase, Map } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/recommendations', label: 'Recommendations', icon: Lightbulb },
   { to: '/goals', label: 'Goals', icon: Target },
   { to: '/career', label: 'Career', icon: Briefcase },
+  { to: '/life-map', label: 'Life Map', icon: Map },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
