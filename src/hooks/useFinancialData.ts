@@ -15,6 +15,11 @@ import type {
   Profile,
   NetWorthSnapshot,
   InstrumentCategory,
+  CashFlowProfile,
+  DebtPlannerSettings,
+  FIInputs,
+  TaxInputs,
+  XirrCashflowEntry,
 } from '../types/financial';
 import { todayISO } from '../utils/calculations';
 
@@ -43,6 +48,25 @@ export const DEFAULT_DATA: FinancialData = {
   snapshots: [],
   dismissedRecommendationKeys: [],
   reviewedRecommendationKeys: [],
+  cashFlow: {
+    salaryInHand: 0,
+    freelanceIncome: 0,
+    rentalIncome: 0,
+    otherIncome: 0,
+    rentOrEmi: 0,
+    groceries: 0,
+    subscriptions: 0,
+    dining: 0,
+    travel: 0,
+    entertainment: 0,
+    miscellaneous: 0,
+    emergencyFundBalance: 0,
+  },
+  sipStepUps: {},
+  debtPlanner: { method: 'Avalanche', extraMonthlyPayment: 0 },
+  fiInputs: { inflationRate: 6, safeWithdrawalRate: 4, postRetirementReturn: 7 },
+  xirrTracker: {},
+  taxInputs: { grossSalary: 0, hra: 0, niftyAssumedXirr: 12 },
 };
 
 function loadData(): FinancialData {
@@ -126,9 +150,50 @@ export function useFinancialData() {
     });
   }, []);
 
-  const recordSnapshotNow = useCallback((netWorth: number) => {
-    addSnapshot({ date: todayISO(), netWorth });
+  const recordSnapshotNow = useCallback((netWorth: number, totalAssets?: number, totalLiabilities?: number) => {
+    addSnapshot({ date: todayISO(), netWorth, totalAssets, totalLiabilities });
   }, [addSnapshot]);
+
+  const deleteSnapshot = useCallback((date: string) => {
+    setData((prev) => ({ ...prev, snapshots: prev.snapshots.filter((s) => s.date !== date) }));
+  }, []);
+
+  const updateCashFlow = useCallback((updates: Partial<CashFlowProfile>) => {
+    setData((prev) => ({ ...prev, cashFlow: { ...prev.cashFlow, ...updates } }));
+  }, []);
+
+  const updateSipStepUp = useCallback((mutualFundId: string, stepUpPercent: number) => {
+    setData((prev) => ({ ...prev, sipStepUps: { ...prev.sipStepUps, [mutualFundId]: { stepUpPercent } } }));
+  }, []);
+
+  const updateDebtPlanner = useCallback((updates: Partial<DebtPlannerSettings>) => {
+    setData((prev) => ({ ...prev, debtPlanner: { ...prev.debtPlanner, ...updates } }));
+  }, []);
+
+  const updateFIInputs = useCallback((updates: Partial<FIInputs>) => {
+    setData((prev) => ({ ...prev, fiInputs: { ...prev.fiInputs, ...updates } }));
+  }, []);
+
+  const updateTaxInputs = useCallback((updates: Partial<TaxInputs>) => {
+    setData((prev) => ({ ...prev, taxInputs: { ...prev.taxInputs, ...updates } }));
+  }, []);
+
+  const addXirrCashflowEntry = useCallback((instrumentId: string, entry: XirrCashflowEntry) => {
+    setData((prev) => ({
+      ...prev,
+      xirrTracker: { ...prev.xirrTracker, [instrumentId]: [...(prev.xirrTracker[instrumentId] || []), entry] },
+    }));
+  }, []);
+
+  const removeXirrCashflowEntry = useCallback((instrumentId: string, index: number) => {
+    setData((prev) => ({
+      ...prev,
+      xirrTracker: {
+        ...prev.xirrTracker,
+        [instrumentId]: (prev.xirrTracker[instrumentId] || []).filter((_, i) => i !== index),
+      },
+    }));
+  }, []);
 
   const dismissRecommendation = useCallback((key: string) => {
     setData((prev) => ({ ...prev, dismissedRecommendationKeys: [...prev.dismissedRecommendationKeys, key] }));
@@ -186,12 +251,20 @@ export function useFinancialData() {
     deleteGoal,
     addSnapshot,
     recordSnapshotNow,
+    deleteSnapshot,
     dismissRecommendation,
     markRecommendationReviewed,
     exportData,
     importData,
     resetAllData,
     categoryLabels,
+    updateCashFlow,
+    updateSipStepUp,
+    updateDebtPlanner,
+    updateFIInputs,
+    updateTaxInputs,
+    addXirrCashflowEntry,
+    removeXirrCashflowEntry,
   };
 }
 

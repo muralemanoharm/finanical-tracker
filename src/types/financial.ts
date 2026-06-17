@@ -117,6 +117,10 @@ export interface Goal extends BaseEntity {
 export interface NetWorthSnapshot {
   date: string;
   netWorth: number;
+  // Added for the snapshot history feature; optional so older saved snapshots (netWorth only)
+  // still load fine.
+  totalAssets?: number;
+  totalLiabilities?: number;
 }
 
 export interface Profile {
@@ -125,6 +129,51 @@ export interface Profile {
   age: number;
   retirementAge: number;
   monthlyExpenseTarget: number;
+}
+
+export interface CashFlowProfile {
+  salaryInHand: number;
+  freelanceIncome: number;
+  rentalIncome: number;
+  otherIncome: number;
+  rentOrEmi: number;
+  groceries: number;
+  subscriptions: number;
+  dining: number;
+  travel: number;
+  entertainment: number;
+  miscellaneous: number;
+  // Emergency fund balance, used by the burn-rate indicator. Cash/bank balance isn't modeled
+  // as its own instrument elsewhere in the app yet, so it's captured here.
+  emergencyFundBalance: number;
+}
+
+/** Per mutual-fund-id step-up settings for the SIP Step-Up Calculator. */
+export type SipStepUpSettings = Record<string, { stepUpPercent: number }>;
+
+export type DebtPayoffMethod = 'Avalanche' | 'Snowball';
+export interface DebtPlannerSettings {
+  method: DebtPayoffMethod;
+  extraMonthlyPayment: number;
+}
+
+export interface FIInputs {
+  inflationRate: number;
+  safeWithdrawalRate: number;
+  postRetirementReturn: number;
+}
+
+export interface XirrCashflowEntry {
+  date: string;
+  amount: number; // negative = investment outflow, positive = withdrawal/redemption
+}
+/** Per-instrument-id list of manually entered cash flows for the XIRR analyser. */
+export type XirrTracker = Record<string, XirrCashflowEntry[]>;
+
+export interface TaxInputs {
+  grossSalary: number;
+  hra: number;
+  niftyAssumedXirr: number;
 }
 
 export interface FinancialData {
@@ -142,6 +191,12 @@ export interface FinancialData {
   snapshots: NetWorthSnapshot[];
   dismissedRecommendationKeys: string[];
   reviewedRecommendationKeys: string[];
+  cashFlow: CashFlowProfile;
+  sipStepUps: SipStepUpSettings;
+  debtPlanner: DebtPlannerSettings;
+  fiInputs: FIInputs;
+  xirrTracker: XirrTracker;
+  taxInputs: TaxInputs;
 }
 
 export type InstrumentCategory =
