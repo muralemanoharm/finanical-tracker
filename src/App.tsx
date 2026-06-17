@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import CashFlow from './pages/CashFlow';
 import FI from './pages/FI';
 import TaxPlanning from './pages/TaxPlanning';
+import Returns from './pages/Returns';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/insurance" element={<Insurance />} />
             <Route path="/fi" element={<FI />} />
             <Route path="/tax-planning" element={<TaxPlanning />} />
+            <Route path="/returns" element={<Returns />} />
             <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/settings" element={<Settings />} />
