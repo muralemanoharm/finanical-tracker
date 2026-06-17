@@ -1,19 +1,32 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Header } from '../components/layout/Header';
 import { Card, KpiCard } from '../components/ui/Card';
 import { DataTable, type Column } from '../components/ui/DataTable';
+import { Field, Input } from '../components/ui/FormField';
 import { useFinancialDataContext } from '../context/FinancialDataContext';
-import { useProjections, PROJECTION_MILESTONES, type InstrumentMaturityProjection } from '../hooks/useProjections';
+import { useProjections, PROJECTION_MILESTONES, projectTotalAssets, type InstrumentMaturityProjection } from '../hooks/useProjections';
 import { formatINR, formatDate } from '../utils/formatters';
+import type { SipStepUpSettings } from '../types/financial';
 
 export default function Projections() {
   const { data } = useFinancialDataContext();
   const { milestones, maturityProjections, getRetirementEstimate } = useProjections(data);
   const [selectedYears, setSelectedYears] = useState<number>(5);
   const [showReal, setShowReal] = useState(false);
+  const [stepUpEnabled, setStepUpEnabled] = useState(false);
+  const [globalStepUpPercent, setGlobalStepUpPercent] = useState(10);
 
   const selectedMilestone = milestones.find((m) => m.years === selectedYears) || milestones[0];
   const retirement = getRetirementEstimate(data.profile.retirementAge, data.profile.age, data.profile.monthlyExpenseTarget);
+
+  const stepUpComparison = useMemo(() => {
+    const noStepUp: SipStepUpSettings = {};
+    const uniformStepUp: SipStepUpSettings = Object.fromEntries(data.mutualFunds.map((mf) => [mf.id, { stepUpPercent: globalStepUpPercent }]));
+    return {
+      withoutStepUp: projectTotalAssets(data, selectedYears, noStepUp),
+      withStepUp: projectTotalAssets(data, selectedYears, uniformStepUp),
+    };
+  }, [data, selectedYears, globalStepUpPercent]);
 
   const maturityColumns: Column<InstrumentMaturityProjection>[] = [
     { header: 'Category', render: (r) => r.category },
@@ -51,6 +64,40 @@ export default function Projections() {
             label={`Projected Portfolio Value in ${selectedYears} Year${selectedYears > 1 ? 's' : ''}${showReal ? ' (Real)' : ''}`}
             value={formatINR(showReal ? selectedMilestone.realValue : selectedMilestone.nominalValue)}
           />
+        </Card>
+
+        <Card>
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-white font-medium mb-1">SIP Step-Up Scenario</h3>
+              <p className="text-xs text-slate-500">What if you stepped up every SIP's monthly contribution by a fixed percentage each year?</p>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-slate-300">
+              <input type="checkbox" checked={stepUpEnabled} onChange={(e) => setStepUpEnabled(e.target.checked)} className="accent-cyan-500" />
+              Apply step-up to all SIPs
+            </label>
+          </div>
+          {stepUpEnabled && (
+            <>
+              <div className="w-48 mb-4">
+                <Field label="Annual Step-Up (%)">
+                  <Input type="number" step="1" min="0" value={globalStepUpPercent || ''} onChange={(e) => setGlobalStepUpPercent(parseFloat(e.target.value) || 0)} />
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <KpiCard label={`Portfolio in ${selectedYears}Y — No Step-Up`} value={formatINR(stepUpComparison.withoutStepUp)} />
+                <KpiCard
+                  label={`Portfolio in ${selectedYears}Y — ${globalStepUpPercent}% Annual Step-Up`}
+                  value={formatINR(stepUpComparison.withStepUp)}
+                  accent="positive"
+                />
+              </div>
+              <p className="text-sm text-emerald-400 mt-3">
+                Stepping up all SIPs by {globalStepUpPercent}% annually grows your {selectedYears}-year portfolio by an extra{' '}
+                {formatINR(stepUpComparison.withStepUp - stepUpComparison.withoutStepUp)}.
+              </p>
+            </>
+          )}
         </Card>
 
         <Card>

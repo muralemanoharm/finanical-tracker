@@ -6,12 +6,13 @@ import { DataTable, type Column } from '../ui/DataTable';
 import { Drawer } from '../ui/Drawer';
 import { EmptyState } from '../ui/EmptyState';
 import { HealthBadge } from '../ui/Badge';
+import { Input } from '../ui/FormField';
 import { AddMFForm } from '../forms/AddMFForm';
 import { formatINR, formatPercent, formatDate } from '../../utils/formatters';
 import type { MutualFund } from '../../types/financial';
 
 export function MFSection() {
-  const { data, addEntity, updateEntity, deleteEntity } = useFinancialDataContext();
+  const { data, addEntity, updateEntity, deleteEntity, updateSipStepUp } = useFinancialDataContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<MutualFund | null>(null);
 
@@ -44,6 +45,22 @@ export function MFSection() {
       },
     },
     { header: 'Maturity / Lock-in', render: (mf) => formatDate(summarizeMutualFund(mf).maturityDate) },
+    {
+      header: 'Annual Step-Up %',
+      render: (mf) =>
+        mf.investmentMode === 'SIP' ? (
+          <Input
+            type="number"
+            step="0.5"
+            min="0"
+            className="w-20 py-1"
+            value={data.sipStepUps[mf.id]?.stepUpPercent || ''}
+            onChange={(e) => updateSipStepUp(mf.id, parseFloat(e.target.value) || 0)}
+          />
+        ) : (
+          <span className="text-slate-500">—</span>
+        ),
+    },
     {
       header: 'Health',
       render: (mf) => {

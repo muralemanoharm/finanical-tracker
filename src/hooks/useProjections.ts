@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import type { FinancialData } from '../types/financial';
+import type { FinancialData, SipStepUpSettings } from '../types/financial';
 import {
   sipFutureValue,
+  stepUpSipFutureValue,
   lumpsumFutureValue,
   fdMaturityValue,
   ulipProjectedValue,
@@ -42,12 +43,15 @@ export interface RetirementEstimate {
   additionalMonthlySipNeeded: number;
 }
 
-/** Projects the nominal value of a single mutual fund holding `years` from today. */
-function projectMutualFund(mf: FinancialData['mutualFunds'][number], years: number): number {
+/** Projects the nominal value of a single mutual fund holding `years` from today. `stepUpPercent`
+ * (SIP only) applies an annual step-up to the monthly contribution across the whole modeled period. */
+function projectMutualFund(mf: FinancialData['mutualFunds'][number], years: number, stepUpPercent = 0): number {
   const monthsElapsed = Math.max(0, monthsBetween(mf.startDate, todayISO()));
   const totalMonths = monthsElapsed + Math.round(years * 12);
   if (mf.investmentMode === 'SIP') {
-    return sipFutureValue(mf.monthlySipAmount || 0, mf.expectedAnnualReturn, totalMonths);
+    return stepUpPercent > 0
+      ? stepUpSipFutureValue(mf.monthlySipAmount || 0, mf.expectedAnnualReturn, totalMonths, stepUpPercent)
+      : sipFutureValue(mf.monthlySipAmount || 0, mf.expectedAnnualReturn, totalMonths);
   }
   const currentValue = mf.currentNav * mf.unitsHeld;
   return lumpsumFutureValue(currentValue, mf.expectedAnnualReturn, years);
@@ -86,8 +90,11 @@ export function projectLiabilities(data: FinancialData, years: number): number {
   }, 0);
 }
 
-export function projectTotalAssets(data: FinancialData, years: number): number {
-  const mf = data.mutualFunds.reduce((s, m) => s + projectMutualFund(m, years), 0);
+/** `sipStepUps` overrides which per-fund annual step-up percentages to apply; defaults to the
+ * fund's own configured step-up (`data.sipStepUps`), so existing behavior is unchanged unless a
+ * caller passes an explicit override (used by the "what if I step up all SIPs" scenario). */
+export function projectTotalAssets(data: FinancialData, years: number, sipStepUps: SipStepUpSettings = data.sipStepUps): number {
+  const mf = data.mutualFunds.reduce((s, m) => s + projectMutualFund(m, years, sipStepUps[m.id]?.stepUpPercent || 0), 0);
   const fd = data.fixedDeposits.reduce((s, f) => s + projectFD(f, years), 0);
   const ulip = data.ulips.reduce((s, u) => s + projectULIP(u, years), 0);
   const epf = data.epfPpf.reduce((s, e) => s + projectEPFPPF(e, years), 0);
@@ -96,8 +103,8 @@ export function projectTotalAssets(data: FinancialData, years: number): number {
   return mf + fd + ulip + epf + stocks + gold;
 }
 
-export function projectNetWorth(data: FinancialData, years: number): number {
-  return projectTotalAssets(data, years) - projectLiabilities(data, years);
+export function projectNetWorth(data: FinancialData, years: number, sipStepUps: SipStepUpSettings = data.sipStepUps): number {
+  return projectTotalAssets(data, years, sipStepUps) - projectLiabilities(data, years);
 }
 
 export function useProjections(data: FinancialData) {
@@ -117,7 +124,12 @@ export function useProjections(data: FinancialData) {
     data.mutualFunds.forEach((mf) => {
       const summary = summarizeMutualFund(mf);
       const yearsToMaturity = summary.maturityDate ? Math.max(0, monthsBetween(todayISO(), summary.maturityDate) / 12) : 5;
-      rows.push({ category: 'Mutual Fund / SIP', name: mf.fundName, maturityDate: summary.maturityDate, projectedValueAtMaturity: projectMutualFund(mf, yearsToMaturity) });
+      rows.push({
+        category: 'Mutual Fund / SIP',
+        name: mf.fundName,
+        maturityDate: summary.maturityDate,
+        projectedValueAtMaturity: projectMutualFund(mf, yearsToMaturity, data.sipStepUps[mf.id]?.stepUpPercent || 0),
+      });
     });
     data.fixedDeposits.forEach((fd) => {
       const summary = summarizeFD(fd);

@@ -96,6 +96,21 @@ export function sipFutureValue(monthlyAmount: number, annualReturnPercent: numbe
   return monthlyAmount * ((Math.pow(1 + r, months) - 1) / r) * (1 + r);
 }
 
+/** Future value of a SIP whose monthly contribution increases by `stepUpPercent` at the start of
+ * every 12th month (annual step-up), contribution at start of month (annuity due). */
+export function stepUpSipFutureValue(monthlyAmount: number, annualReturnPercent: number, months: number, stepUpPercent: number): number {
+  if (!monthlyAmount || months <= 0) return 0;
+  if (!stepUpPercent) return sipFutureValue(monthlyAmount, annualReturnPercent, months);
+  const r = annualReturnPercent / 100 / 12;
+  let fv = 0;
+  let currentMonthly = monthlyAmount;
+  for (let m = 1; m <= months; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) currentMonthly *= 1 + stepUpPercent / 100;
+    fv += currentMonthly * Math.pow(1 + r, months - m + 1);
+  }
+  return fv;
+}
+
 /** Current accumulated value of a SIP that has been running since startDate, valued as of today. */
 export function sipCurrentValue(monthlyAmount: number, annualReturnPercent: number, startDateISO: string, asOfISO: string = todayISO()): number {
   const monthsElapsed = Math.max(0, monthsBetween(startDateISO, asOfISO));
