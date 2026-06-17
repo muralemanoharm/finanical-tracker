@@ -66,7 +66,7 @@ export const DEFAULT_DATA: FinancialData = {
   debtPlanner: { method: 'Avalanche', extraMonthlyPayment: 0 },
   fiInputs: { inflationRate: 6, safeWithdrawalRate: 4, postRetirementReturn: 7 },
   xirrTracker: {},
-  taxInputs: { grossSalary: 0, hra: 0, niftyAssumedXirr: 12 },
+  taxInputs: { grossSalary: 0, hra: 0, niftyAssumedXirr: 12, other80CInvestments: 0, npsContribution: 0 },
 };
 
 function loadData(): FinancialData {

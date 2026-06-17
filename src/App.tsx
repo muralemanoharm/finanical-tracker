@@ -10,6 +10,7 @@ import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import CashFlow from './pages/CashFlow';
 import FI from './pages/FI';
+import TaxPlanning from './pages/TaxPlanning';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/projections" element={<Projections />} />
             <Route path="/insurance" element={<Insurance />} />
             <Route path="/fi" element={<FI />} />
+            <Route path="/tax-planning" element={<TaxPlanning />} />
             <Route path="/recommendations" element={<Recommendations />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/settings" element={<Settings />} />

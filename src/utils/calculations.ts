@@ -18,6 +18,56 @@ export const GOLD_EXPECTED_RETURN_DEFAULT = 8;
 // inflation-adjusted annual expense at retirement.
 export const RETIREMENT_CORPUS_MULTIPLE = 25;
 
+// --- Income tax (India, FY2025-26 / AY2026-27) ---
+// Simplifications: no senior-citizen slabs, no surcharge, no marginal relief on the new-regime
+// rebate, and the `hra` tax input is treated as an already-computed HRA exemption amount rather
+// than being derived from rent/basic-salary/city rules.
+export const SECTION_80C_LIMIT = 150_000;
+export const SECTION_80D_LIMIT_NON_SENIOR = 25_000;
+export const SECTION_80D_LIMIT_SENIOR = 50_000;
+export const NPS_80CCD_1B_LIMIT = 50_000;
+export const OLD_REGIME_STANDARD_DEDUCTION = 50_000;
+export const NEW_REGIME_STANDARD_DEDUCTION = 75_000;
+export const OLD_REGIME_REBATE_THRESHOLD = 500_000; // Section 87A
+export const NEW_REGIME_REBATE_THRESHOLD = 1_200_000; // Section 87A
+export const CESS_RATE = 4; // percent, Health & Education Cess on tax payable, both regimes
+
+export interface TaxSlab {
+  upTo: number; // inclusive upper bound of this slab; Infinity for the top slab
+  rate: number; // percent
+}
+
+export const OLD_REGIME_SLABS: TaxSlab[] = [
+  { upTo: 250_000, rate: 0 },
+  { upTo: 500_000, rate: 5 },
+  { upTo: 1_000_000, rate: 20 },
+  { upTo: Infinity, rate: 30 },
+];
+
+export const NEW_REGIME_SLABS: TaxSlab[] = [
+  { upTo: 400_000, rate: 0 },
+  { upTo: 800_000, rate: 5 },
+  { upTo: 1_200_000, rate: 10 },
+  { upTo: 1_600_000, rate: 15 },
+  { upTo: 2_000_000, rate: 20 },
+  { upTo: 2_400_000, rate: 25 },
+  { upTo: Infinity, rate: 30 },
+];
+
+/** Tax payable on taxableIncome under a slab schedule (each slab's rate applies only to the
+ * portion of income within that slab). */
+export function slabTax(taxableIncome: number, slabs: TaxSlab[]): number {
+  let tax = 0;
+  let lastCap = 0;
+  for (const slab of slabs) {
+    if (taxableIncome <= lastCap) break;
+    const slabAmount = Math.min(taxableIncome, slab.upTo) - lastCap;
+    tax += slabAmount * (slab.rate / 100);
+    lastCap = slab.upTo;
+  }
+  return tax;
+}
+
 /** Months between two ISO dates (b - a). Negative if b is before a. */
 export function monthsBetween(aISO: string, bISO: string): number {
   return differenceInCalendarMonths(parseISO(bISO), parseISO(aISO));

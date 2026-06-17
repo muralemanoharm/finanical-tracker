@@ -174,6 +174,10 @@ export interface TaxInputs {
   grossSalary: number;
   hra: number;
   niftyAssumedXirr: number;
+  // Manual entries for 80C/NPS amounts not derivable from other tracked instruments
+  // (e.g. home loan principal repayment, NSC, tax-saver FD, Sukanya Samriddhi).
+  other80CInvestments: number;
+  npsContribution: number; // Section 80CCD(1B), additional to the 80C limit
 }
 
 export interface FinancialData {
